@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz : Initiation et Découverte de l'IA - Niveau 1</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #7D3ABE 0%, #B06DF1 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #FF1FA9 0%, #7D3ABE 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .quiz-section {
+            padding: 40px 30px;
+        }
+        
+        .section-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .section-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 25px;
+            border: 2px solid #7D3ABE;
+            background: white;
+            color: #7D3ABE;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .section-btn:hover {
+            background: #7D3ABE;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(125,58,190,0.3);
+        }
+        
+        .section-btn.active {
+            background: #7D3ABE;
+            color: white;
+        }
+        
+        .section-btn.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .section-btn.completed:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7D3ABE 0%, #B06DF1 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #7D3ABE;
+        }
+        
+        .question-number {
+            color: #7D3ABE;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .answer-btn {
+            padding: 18px 25px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1.05em;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .answer-btn:hover:not(.disabled) {
+            border-color: #7D3ABE;
+            background: #f0e6ff;
+            transform: translateX(5px);
+        }
+        
+        .answer-btn.correct {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+            animation: correctPulse 0.5s ease;
+        }
+        
+        .answer-btn.incorrect {
+            border-color: #ff6b6b;
+            background: #ff6b6b;
+            color: white;
+            animation: incorrectShake 0.5s ease;
+        }
+        
+        .answer-btn.show-correct {
+            border-color: #10b981;
+            background: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .answer-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .answer-label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #7D3ABE 0%, #B06DF1 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(125,58,190,0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16,185,129,0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7D3ABE 0%, #B06DF1 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto;
+            box-shadow: 0 10px 30px rgba(125,58,190,0.3);
+        }
+        
+        .score-number {
+            font-size: 3.5em;
+            font-weight: bold;
+        }
+        
+        .score-total {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .final-results {
+            background: linear-gradient(135deg, #7D3ABE 0%, #B06DF1 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        
+        .final-results h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-scores {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .individual-score {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .individual-score h4 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .individual-score .score {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .interpretation {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border-left: 5px solid #7D3ABE;
+        }
+        
+        .interpretation h3 {
+            color: #7D3ABE;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .interpretation p {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+        
+        .answers-review {
+            text-align: left;
+            margin-top: 40px;
+        }
+        
+        .review-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .review-item.correct {
+            border-left: 5px solid #10b981;
+        }
+        
+        .review-item.incorrect {
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .review-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .review-answer {
+            color: #666;
+        }
+        
+        .review-answer.correct {
+            color: #10b981;
+        }
+        
+        .review-answer.incorrect {
+            color: #ff6b6b;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .helper-text {
+            color: #666;
+            font-size: 0.9em;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        /* RESPONSIVE MOBILE */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .quiz-section {
+                padding: 30px 20px;
+            }
+            
+            .section-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .section-btn {
+                min-width: 100%;
+                padding: 12px 20px;
+                font-size: 0.95em;
+            }
+            
+            .question-card {
+                padding: 20px;
+            }
+            
+            .question-text {
+                font-size: 1.1em;
+            }
+            
+            .answer-btn {
+                padding: 15px 20px;
+                font-size: 0.95em;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 12px 25px;
+                font-size: 0.95em;
+            }
+            
+            .helper-text {
+                font-size: 0.85em;
+            }
+            
+            .score-circle {
+                width: 160px;
+                height: 160px;
+            }
+            
+            .score-number {
+                font-size: 2.8em;
+            }
+            
+            .score-total {
+                font-size: 1em;
+            }
+            
+            .results {
+                padding: 30px 15px;
+            }
+            
+            .interpretation {
+                padding: 20px;
+            }
+            
+            .interpretation h3 {
+                font-size: 1.2em;
+            }
+            
+            .interpretation p {
+                font-size: 1em;
+            }
+            
+            .final-results {
+                padding: 25px 20px;
+            }
+            
+            .final-results h2 {
+                font-size: 1.8em;
+            }
+            
+            .quiz-scores {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .individual-score {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .question-text {
+                font-size: 1em;
+            }
+            
+            .answer-btn {
+                font-size: 0.9em;
+                padding: 12px 15px;
+            }
+            
+            .score-circle {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .score-number {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // Données du quiz (simplifié pour économiser de l'espace - les 40 questions complètes sont conservées)
+        const quizData = {
+            general: {
+                title: "Quiz Général",
+                questions: [
+                    {question: "Que signifie LLM dans le contexte de l'intelligence artificielle ?", answers: ["Large Language Model", "Limited Learning Machine", "Long Language Memory"], correct: 0},
+                    {question: "Quel est le taux d'erreur possible de l'IA selon le document ?", answers: ["Entre 1% et 5%", "Entre 10% et 40%", "Entre 50% et 70%"], correct: 1},
+                    {question: "Qu'est-ce que le \"machine learning\" ?", answers: ["L'apprentissage de l'IA en analysant des millions d'exemples pour repérer des schémas récurrents", "La programmation manuelle de toutes les réponses possibles", "La création de robots physiques"], correct: 0},
+                    {question: "Quelle phrase résume l'enjeu de l'IA en 2025 ?", answers: ["L'IA va remplacer tous les humains", "L'IA ne remplacera pas les humains, mais les humains qui utilisent l'IA remplaceront ceux qui ne l'utilisent pas", "L'IA est dangereuse et doit être interdite"], correct: 1},
+                    {question: "Quel pourcentage des entreprises européennes intègrent déjà des outils d'IA ?", answers: ["30%", "50%", "70%"], correct: 2},
+                    {question: "Quelle IA est considérée comme la plus protectrice des données utilisateur ?", answers: ["Gemini (Google)", "Claude (Anthropic) et Mistral", "ChatGPT gratuit"], correct: 1},
+                    {question: "Que signifie RGPD ?", answers: ["Règlement Général sur la Protection des Données", "Règlement Global pour les Pratiques Digitales", "Réseau Général de Protection Digitale"], correct: 0},
+                    {question: "Quelle IA est recommandée pour vérifier une information avec des sources fiables ?", answers: ["ChatGPT", "Perplexity", "Mistral"], correct: 1},
+                    {question: "Quelle est la spécialité principale de Claude (Anthropic) ?", answers: ["La création d'images", "L'analyse et la lecture de longs documents", "La génération de musique"], correct: 1},
+                    {question: "Selon le document, combien de temps ChatGPT peut-il économiser sur une tâche qui prenait 3 heures ?", answers: ["30 minutes", "Quelques minutes", "1 heure"], correct: 1},
+                    {question: "Quel gain de productivité moyen rapportent les professionnels utilisant l'IA en 2025 ?", answers: ["20% en moyenne", "40% en moyenne", "80% en moyenne"], correct: 1},
+                    {question: "Qu'est-ce que le \"deep learning\" ?", answers: ["Une version avancée du machine learning avec plusieurs niveaux d'analyse", "Un type de plongée sous-marine", "Une méthode pour coder rapidement"], correct: 0},
+                    {question: "Quelle IA est spécialisée dans l'intégration avec l'écosystème Google (Docs, Gmail, YouTube) ?", answers: ["ChatGPT", "Gemini", "Perplexity"], correct: 1},
+                    {question: "Que fait Gamma comme outil d'IA ?", answers: ["Crée des présentations à partir d'un simple texte", "Génère de la musique", "Traduit des vidéos"], correct: 0},
+                    {question: "Quel est le principal risque de ChatGPT mentionné dans le document ?", answers: ["Il est trop lent", "Il peut \"halluciner\" (inventer des informations)", "Il ne parle qu'anglais"], correct: 1},
+                    {question: "Quelle IA française est mentionnée comme champion européen open-source ?", answers: ["Perplexity", "Mistral", "DeepSeek"], correct: 1},
+                    {question: "Pour quel type d'utilisation Notion AI est-il particulièrement adapté ?", answers: ["Créer des vidéos", "Structurer vos idées, notes et projets", "Générer des voix off"], correct: 1},
+                    {question: "Selon le document, que doit-on toujours vérifier avec l'IA ?", answers: ["La couleur de l'interface", "Les informations importantes avant d'agir dessus", "Le nombre de mots dans la réponse"], correct: 1},
+                    {question: "Quel outil d'IA permet de cloner et synthétiser des voix humaines ?", answers: ["Canva", "ElevenLabs", "Trello"], correct: 1},
+                    {question: "Quelle est la règle à retenir quand un service d'IA est gratuit ?", answers: ["C'est toujours dangereux", "\"Quand c'est gratuit, c'est souvent vous le produit\" (vos données)", "C'est forcément de mauvaise qualité"], correct: 1}
+                ]
+            },
+            prompting: {
+                title: "Quiz Prompting",
+                questions: [
+                    {question: "Qu'est-ce qu'un \"prompt\" ?", answers: ["Un type d'intelligence artificielle", "Une instruction que vous donnez à l'IA pour obtenir une réponse", "Un logiciel de programmation"], correct: 1},
+                    {question: "Que signifie travailler en \"mode itératif\" avec l'IA ?", answers: ["Obtenir la réponse parfaite du premier coup", "Avancer étape par étape en ajustant vos prompts à partir des réponses reçues", "Poser la même question plusieurs fois sans modification"], correct: 1},
+                    {question: "Parmi les éléments suivants, lesquels font partie des \"9 règles d'or du prompting\" ?", answers: ["Donner un contexte clair et attribuer un rôle à l'IA", "Rester volontairement vague pour laisser l'IA créative", "Ne jamais reformuler ses demandes"], correct: 0},
+                    {question: "Qu'est-ce qu'un \"framework\" de prompt ?", answers: ["Un robot qui aide à créer des prompts", "Un modèle de construction qui guide pour rédiger un prompt complet et efficace", "Un logiciel obligatoire pour utiliser l'IA"], correct: 1},
+                    {question: "Quel est l'objectif du framework \"ERA\" ?", answers: ["Attente → Rôle → Action (pour cadrer un résultat précis)", "Écrire → Relire → Améliorer", "Erreur → Révision → Amélioration"], correct: 0},
+                    {question: "Qu'est-ce que le \"méta-prompting\" ?", answers: ["Une demande très compliquée", "Demander à l'IA de vous aider à reformuler votre prompt pour le rendre plus efficace", "Envoyer plusieurs prompts en même temps"], correct: 1},
+                    {question: "Quelle est la différence entre \"prompting classique\" et \"méta-prompting\" ?", answers: ["Le prompting consiste à poser une question ; le méta-prompting consiste à réfléchir avec l'IA pour poser la bonne question", "Le méta-prompting est plus rapide que le prompting classique", "Il n'y a aucune différence"], correct: 0},
+                    {question: "Quelle est une bonne formulation pour utiliser le méta-prompting ?", answers: ["Réponds immédiatement sans réfléchir", "Avant de me répondre, peux-tu reformuler ma demande pour t'assurer de bien la comprendre ?", "Ne pose pas de questions, réponds directement"], correct: 1},
+                    {question: "Qu'est-ce que le \"Deep Search\" ?", answers: ["Une fonction qui permet à l'IA de chercher sur le web en temps réel et de citer ses sources", "Une méthode pour plonger dans l'océan", "Un type d'intelligence artificielle très puissant"], correct: 0},
+                    {question: "Quelle est la différence entre \"Deep Search\" et \"Deep Research\" ?", answers: ["Deep Search = outil de recherche ; Deep Research = méthode d'analyse raisonnée", "Ce sont exactement la même chose", "Deep Research est plus rapide que Deep Search"], correct: 0},
+                    {question: "Selon le guide, que doit toujours contenir un bon prompt ?", answers: ["Au moins 500 mots", "Un rôle, un format et une cible", "Des émojis et des couleurs"], correct: 1},
+                    {question: "Quelle est l'une des 8 astuces à adopter pour améliorer vos prompts ?", answers: ["Découpez votre demande en étapes successives", "Écrivez le plus long texte possible", "Ne donnez jamais de contraintes"], correct: 0},
+                    {question: "Pourquoi est-il utile de \"fixer des contraintes\" dans un prompt ?", answers: ["Pour limiter la longueur et améliorer la clarté de la réponse", "Pour compliquer la tâche de l'IA", "Pour obtenir des réponses plus longues"], correct: 0},
+                    {question: "Que signifie \"Output\" dans le contexte de l'IA ?", answers: ["Le contexte que vous fournissez", "La réponse générée par l'IA", "Le modèle d'IA utilisé"], correct: 1},
+                    {question: "Quelle question permet de vérifier la certitude de l'IA sur une réponse ?", answers: ["Peux-tu écrire plus ?", "Êtes-vous sûr de cette réponse ? Quel est votre degré de confiance ?", "Quelle est ta couleur préférée ?"], correct: 1},
+                    {question: "Parmi ces erreurs fréquentes, laquelle doit être évitée ?", answers: ["S'arrêter à la première réponse sans affiner", "Donner du contexte précis", "Indiquer le format souhaité"], correct: 0},
+                    {question: "Quelle est la fonction de \"Deep Research\" dans Gemini ?", answers: ["Permet d'aller plus loin que Google Search en analysant les pages pour extraire les idées clés", "Cherche uniquement des images", "Traduit automatiquement les documents"], correct: 0},
+                    {question: "À quoi sert \"l'Optimiseur de prompt\" d'OpenAI ?", answers: ["À supprimer tous vos prompts", "À transformer votre prompt initial en une version plus claire et structurée", "À créer des images"], correct: 1},
+                    {question: "Quelle est la meilleure pratique pour donner du feedback à l'IA ?", answers: ["Le texte est trop général. Ajoutez des exemples concrets et des listes à puces", "C'est nul, recommence", "Ne jamais donner de feedback"], correct: 0},
+                    {question: "Pourquoi est-il important de \"montrer des exemples\" dans vos prompts ?", answers: ["Pour rendre le prompt plus long", "Pour aider l'IA à comprendre exactement ce que vous attendez", "C'est inutile, l'IA comprend toujours parfaitement"], correct: 1}
+                ]
+            }
+        };
+        
+        function QuizApp() {
+            const [currentSection, setCurrentSection] = useState('general');
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [selectedAnswers, setSelectedAnswers] = useState({general: {}, prompting: {}});
+            const [showResults, setShowResults] = useState(false);
+            const [showReview, setShowReview] = useState(false);
+            const [answerStates, setAnswerStates] = useState({});
+            const [isAnswering, setIsAnswering] = useState(false);
+            const [completedQuizzes, setCompletedQuizzes] = useState([]);
+            const [showFinalResults, setShowFinalResults] = useState(false);
+            
+            const currentQuiz = quizData[currentSection];
+            const totalQuestions = currentQuiz.questions.length;
+            const answeredCount = Object.keys(selectedAnswers[currentSection]).length;
+            const progress = (answeredCount / totalQuestions) * 100;
+            
+            const handleAnswerSelect = (answerIndex) => {
+                if (isAnswering) return;
+                
+                const question = currentQuiz.questions[currentQuestion];
+                const isCorrect = answerIndex === question.correct;
+                
+                setIsAnswering(true);
+                setAnswerStates({selected: answerIndex, correct: question.correct, isCorrect: isCorrect});
+                setSelectedAnswers({...selectedAnswers, [currentSection]: {...selectedAnswers[currentSection], [currentQuestion]: answerIndex}});
+                
+                setTimeout(() => {
+                    if (currentQuestion < totalQuestions - 1) {
+                        setCurrentQuestion(currentQuestion + 1);
+                        setAnswerStates({});
+                        setIsAnswering(false);
+                    } else {
+                        setShowResults(true);
+                        setIsAnswering(false);
+                        if (!completedQuizzes.includes(currentSection)) {
+                            setCompletedQuizzes([...completedQuizzes, currentSection]);
+                        }
+                    }
+                }, 1500);
+            };
+            
+            const handlePrevious = () => {
+                if (currentQuestion > 0 && !isAnswering) {
+                    setCurrentQuestion(currentQuestion - 1);
+                    setAnswerStates({});
+                }
+            };
+            
+            const handleSectionChange = (section) => {
+                if (!isAnswering) {
+                    setCurrentSection(section);
+                    setCurrentQuestion(0);
+                    setShowResults(false);
+                    setShowReview(false);
+                    setAnswerStates({});
+                    setShowFinalResults(false);
+                }
+            };
+            
+            const calculateScore = (section) => {
+                let correct = 0;
+                const quiz = quizData[section];
+                quiz.questions.forEach((q, index) => {
+                    if (selectedAnswers[section][index] === q.correct) correct++;
+                });
+                return correct;
+            };
+            
+            const getInterpretation = (score, total, section) => {
+                const percentage = (score / total) * 100;
+                if (percentage >= 90) {
+                    return {title: "Excellent !", message: section === 'general' ? "Vous maîtrisez parfaitement les concepts clés de l'IA." : "Vous maîtrisez parfaitement les techniques de prompting et de communication avec l'IA."};
+                } else if (percentage >= 75) {
+                    return {title: "Très bien !", message: section === 'general' ? "Vous avez une solide compréhension des fondamentaux." : "Vous avez une solide compréhension des concepts essentiels du prompting."};
+                } else if (percentage >= 60) {
+                    return {title: "Bon niveau !", message: section === 'general' ? "Quelques révisions vous permettront d'approfondir." : "Quelques révisions sur le méta-prompting et le deep search vous permettront d'approfondir."};
+                } else {
+                    return {title: "À améliorer", message: section === 'general' ? "Relisez les sections du guide sur les concepts de base, les différentes IA et leurs usages." : "Relisez les sections du guide sur les prompts, les frameworks et les techniques avancées d'interaction avec l'IA."};
+                }
+            };
+            
+            const restartQuiz = () => {
+                setCurrentQuestion(0);
+                setSelectedAnswers({...selectedAnswers, [currentSection]: {}});
+                setShowResults(false);
+                setShowReview(false);
+                setAnswerStates({});
+                setIsAnswering(false);
+                setCompletedQuizzes(completedQuizzes.filter(q => q !== currentSection));
+            };
+            
+            const goToNextQuiz = () => {
+                const nextSection = currentSection === 'general' ? 'prompting' : 'general';
+                handleSectionChange(nextSection);
+            };
+            
+            const showGlobalResults = () => {
+                setShowFinalResults(true);
+            };
+            
+            if (showFinalResults && completedQuizzes.length === 2) {
+                const generalScore = calculateScore('general');
+                const promptingScore = calculateScore('prompting');
+                const totalScore = generalScore + promptingScore;
+                const totalQs = quizData.general.questions.length + quizData.prompting.questions.length;
+                const percentage = (totalScore / totalQs) * 100;
+                
+                let globalInterpretation = {};
+                if (percentage >= 90) {
+                    globalInterpretation = {title: "🏆 Performance Exceptionnelle !", message: "Vous maîtrisez parfaitement l'ensemble des concepts d'initiation à l'IA et les techniques de prompting. Vous êtes prêt(e) à utiliser l'IA de manière professionnelle et efficace !"};
+                } else if (percentage >= 75) {
+                    globalInterpretation = {title: "✨ Excellent Niveau !", message: "Vous avez une très bonne compréhension globale de l'IA et du prompting. Avec quelques approfondissements, vous deviendrez un expert !"};
+                } else if (percentage >= 60) {
+                    globalInterpretation = {title: "👍 Bon Niveau !", message: "Vous avez acquis de bonnes bases. Continuez à pratiquer et à réviser les points qui vous posent encore question."};
+                } else {
+                    globalInterpretation = {title: "📚 Continuez vos Efforts !", message: "Vous êtes sur la bonne voie. Prenez le temps de relire le guide et de refaire les quiz pour consolider vos connaissances."};
+                }
+                
+                return (
+                    <div className="results">
+                        <div className="final-results">
+                            <h2>🎉 Résultats Globaux</h2>
+                            <div className="score-circle" style={{margin: '30px auto'}}>
+                                <div className="score-number">{totalScore}</div>
+                                <div className="score-total">/ {totalQs}</div>
+                            </div>
+                            <div className="quiz-scores">
+                                <div className="individual-score">
+                                    <h4>Quiz Général</h4>
+                                    <div className="score">{generalScore} / {quizData.general.questions.length}</div>
+                                </div>
+                                <div className="individual-score">
+                                    <h4>Quiz Prompting</h4>
+                                    <div className="score">{promptingScore} / {quizData.prompting.questions.length}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="interpretation">
+                            <h3>{globalInterpretation.title}</h3>
+                            <p>{globalInterpretation.message}</p>
+                        </div>
+                        
+                        <div className="nav-buttons" style={{marginTop: '30px'}}>
+                            <button className="btn btn-secondary" onClick={() => setShowFinalResults(false)}>Voir les détails par quiz</button>
+                            <button className="btn btn-primary" onClick={() => {
+                                setSelectedAnswers({ general: {}, prompting: {} });
+                                setCompletedQuizzes([]);
+                                setShowFinalResults(false);
+                                setCurrentSection('general');
+                                setCurrentQuestion(0);
+                                setShowResults(false);
+                            }}>Recommencer tous les quiz</button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (showResults) {
+                const score = calculateScore(currentSection);
+                const interpretation = getInterpretation(score, totalQuestions, currentSection);
+                const otherSection = currentSection === 'general' ? 'prompting' : 'general';
+                const hasCompletedOtherQuiz = completedQuizzes.includes(otherSection);
+                
+                return (
+                    <div className="results">
+                        <h2 style={{fontSize: '2em', marginBottom: '20px', color: '#333'}}>Résultats : {currentQuiz.title}</h2>
+                        <div className="score-circle">
+                            <div className="score-number">{score}</div>
+                            <div className="score-total">/ {totalQuestions}</div>
+                        </div>
+                        <div className="interpretation">
+                            <h3>{interpretation.title}</h3>
+                            <p>{interpretation.message}</p>
+                        </div>
+                        
+                        {showReview && (
+                            <div className="answers-review">
+                                <h3 style={{marginBottom: '20px', color: '#333'}}>Révision des réponses</h3>
+                                {currentQuiz.questions.map((q, index) => {
+                                    const isCorrect = selectedAnswers[currentSection][index] === q.correct;
+                                    return (
+                                        <div key={index} className={`review-item ${isCorrect ? 'correct' : 'incorrect'}`}>
+                                            <div className="review-question">Question {index + 1}: {q.question}</div>
+                                            <div className={`review-answer ${isCorrect ? 'correct' : 'incorrect'}`}>Votre réponse: {q.answers[selectedAnswers[currentSection][index]] || "Non répondu"}</div>
+                                            {!isCorrect && (<div className="review-answer correct">Bonne réponse: {q.answers[q.correct]}</div>)}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        
+                        <div className="nav-buttons" style={{marginTop: '30px', flexWrap: 'wrap'}}>
+                            <button className="btn btn-secondary" onClick={() => setShowReview(!showReview)}>{showReview ? "Masquer" : "Voir les réponses"}</button>
+                            <button className="btn btn-secondary" onClick={restartQuiz}>Recommencer ce quiz</button>
+                            {!hasCompletedOtherQuiz && (<button className="btn btn-success" onClick={goToNextQuiz}>Passer au quiz suivant →</button>)}
+                            {completedQuizzes.length === 2 && (<button className="btn btn-primary" onClick={showGlobalResults}>🏆 Voir le résultat global</button>)}
+                        </div>
+                    </div>
+                );
+            }
+            
+            const question = currentQuiz.questions[currentQuestion];
+            
+            const getAnswerClassName = (index) => {
+                if (!answerStates.selected && answerStates.selected !== 0) return 'answer-btn';
+                if (index === answerStates.selected) return answerStates.isCorrect ? 'answer-btn correct' : 'answer-btn incorrect';
+                if (index === answerStates.correct && !answerStates.isCorrect) return 'answer-btn show-correct';
+                return 'answer-btn disabled';
+            };
+            
+            return (
+                <div className="quiz-section">
+                    <div className="section-selector">
+                        <button className={`section-btn ${currentSection === 'general' ? 'active' : ''} ${completedQuizzes.includes('general') ? 'completed' : ''}`} onClick={() => handleSectionChange('general')} disabled={isAnswering}>
+                            {completedQuizzes.includes('general') ? '✓ ' : ''}Quiz Général
+                        </button>
+                        <button className={`section-btn ${currentSection === 'prompting' ? 'active' : ''} ${completedQuizzes.includes('prompting') ? 'completed' : ''}`} onClick={() => handleSectionChange('prompting')} disabled={isAnswering}>
+                            {completedQuizzes.includes('prompting') ? '✓ ' : ''}Quiz Prompting
+                        </button>
+                    </div>
+                    
+                    <div className="progress-bar">
+                        <div className="progress-fill" style={{width: `${progress}%`}}></div>
+                    </div>
+                    
+                    <div className="question-card">
+                        <div className="question-number">Question {currentQuestion + 1} sur {totalQuestions}</div>
+                        <div className="question-text">{question.question}</div>
+                        <div className="answers">
+                            {question.answers.map((answer, index) => (
+                                <button key={index} className={getAnswerClassName(index)} onClick={() => handleAnswerSelect(index)} disabled={isAnswering}>
+                                    <span className="answer-label">{String.fromCharCode(65 + index)})</span>{answer}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="nav-buttons">
+                        <button className="btn btn-secondary" onClick={handlePrevious} disabled={currentQuestion === 0 || isAnswering}>← Précédent</button>
+                        <div className="helper-text">Cliquez sur une réponse pour continuer</div>
+                    </div>
+                </div>
+            );
+        }
+        
+        function App() {
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>Quiz : Initiation et Découverte de l'IA</h1>
+                        <p>Niveau 1</p>
+                    </div>
+                    <QuizApp />
+                    <div className="footer">© OrizIA - Tous droits réservés</div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
